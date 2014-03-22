@@ -38,6 +38,7 @@
 
 	<modules>
 		<module>swt-visualization</module>
+        <module>stratosphere-parquet-example</module>
 	</modules>
 
 	<properties>
