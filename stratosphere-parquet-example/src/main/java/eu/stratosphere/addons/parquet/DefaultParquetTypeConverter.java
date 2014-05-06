@@ -1,4 +1,5 @@
 package eu.stratosphere.addons.parquet;
+
 /***********************************************************************************************************************
  * Copyright (C) 2010-2013 by the Stratosphere project (http://stratosphere.eu)
  *
@@ -12,54 +13,61 @@ package eu.stratosphere.addons.parquet;
  * specific language governing permissions and limitations under the License.
  **********************************************************************************************************************/
 
-
 import eu.stratosphere.hadoopcompatibility.datatypes.HadoopTypeConverter;
 import eu.stratosphere.types.NullValue;
 import eu.stratosphere.types.Record;
 import eu.stratosphere.types.StringValue;
 import eu.stratosphere.types.Value;
-
-
 import parquet.example.data.simple.SimpleGroup;
 import parquet.hadoop.mapred.Container;
 
-
 /**
  * A converter for Parquet-related types.
+ * 
  * @param <K>
  * @param <V>
  */
+@SuppressWarnings({ "serial", "rawtypes", "unchecked" })
+public class DefaultParquetTypeConverter<K, V> implements HadoopTypeConverter<K, V> {
 
-public class DefaultParquetTypeConverter<K,V>  implements HadoopTypeConverter<K,V> {
+	@Override
+	public void convert(Record stratosphereRecord, K hadoopKey, V hadoopValue) {
+		stratosphereRecord.setField(0, NullValue.getInstance()); // Parquet
+																	// always
+																	// returns
+																	// null as a
+																	// key.
+		stratosphereRecord.setField(1, convert(hadoopValue));
+	}
 
+	private Value convert(V parquetType) {
 
-    @Override
-    public void convert(Record stratosphereRecord, K hadoopKey, V hadoopValue) {
-        stratosphereRecord.setField(0, NullValue.getInstance()); //Parquet always returns null as a key.
-        stratosphereRecord.setField(1, convert(hadoopValue));
-    }
+		// The container is a wrapper for types, used when working with its
+		// deprecated mapred InputFormat.
+		if (parquetType instanceof Container) {
+			Object value = ((Container) parquetType).get();
+			return convert((V) value); // Converting the content of the wrapper,
+										// which is what we need.
+		}
 
-    private Value convert(V parquetType) {
+		if (parquetType instanceof SimpleGroup) { // An example schema which may
+													// be found in
+													// parquet-column.
 
-        //The container is a wrapper for types, used when working with its deprecated mapred InputFormat.
-       if (parquetType instanceof Container) {
-            Object value = ((Container)parquetType).get();
-            return convert((V) value); //Converting the content of the wrapper, which is what we need.
-       }
+			// "column_name: content_of_column
+			String groupStringWithSchema = parquetType.toString();
 
-       if (parquetType instanceof SimpleGroup) { //An example schema which may be found in parquet-column.
+			/*
+			 * Isolating the content of the column from the schema information.
+			 * The cleanest (and correct) thing to do would be to map this
+			 * schema type to a Stratosphere type.
+			 */
+			String groupStringNoSchema = groupStringWithSchema.replaceAll("\n.*?: ", "\n").replaceFirst(".*?: ", "");
+			return new StringValue(groupStringNoSchema);
+		}
+		// TODO Primitives of Parquet such as INT64 should also be converted as
+		// they are not considered Hadoop Writables.
 
-            //"column_name: content_of_column
-            String groupStringWithSchema = parquetType.toString();
-
-           /* Isolating the content of the column from the schema information.
-            The cleanest (and correct) thing to do would be to map this schema type to a Stratosphere type.
-            */
-            String groupStringNoSchema = groupStringWithSchema.replaceAll("\n.*?: ", "\n").replaceFirst(".*?: ", "");
-            return new StringValue(groupStringNoSchema);
-       }
-        //TODO Primitives of Parquet such as INT64 should also be converted as they are not considered Hadoop Writables.
-
-        throw new RuntimeException("Unable to convert Parquet type ("+parquetType.getClass().getCanonicalName()+") to Stratosphere.");
-    }
+		throw new RuntimeException("Unable to convert Parquet type (" + parquetType.getClass().getCanonicalName() + ") to Stratosphere.");
+	}
 }

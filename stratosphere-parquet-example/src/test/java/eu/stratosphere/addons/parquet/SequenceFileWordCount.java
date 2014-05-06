@@ -1,5 +1,3 @@
-package eu.stratosphere.addons.parquet;
-
 /***********************************************************************************************************************
  * Copyright (C) 2010-2013 by the Stratosphere project (http://stratosphere.eu)
  *
@@ -13,43 +11,31 @@ package eu.stratosphere.addons.parquet;
  * specific language governing permissions and limitations under the License.
  **********************************************************************************************************************/
 
+package eu.stratosphere.addons.parquet;
+
 import eu.stratosphere.api.common.Plan;
+import eu.stratosphere.client.LocalExecutor;
+
+import org.apache.hadoop.fs.Path;
+
 import eu.stratosphere.api.common.operators.FileDataSink;
 import eu.stratosphere.api.java.record.io.CsvOutputFormat;
 import eu.stratosphere.api.java.record.operators.MapOperator;
 import eu.stratosphere.api.java.record.operators.ReduceOperator;
-import eu.stratosphere.client.LocalExecutor;
 import eu.stratosphere.hadoopcompatibility.HadoopDataSource;
 import eu.stratosphere.hadoopcompatibility.example.WordCount;
 import eu.stratosphere.types.IntValue;
 import eu.stratosphere.types.StringValue;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.SequenceFileInputFormat;
 
-import parquet.hadoop.ParquetInputFormat;
-import parquet.hadoop.example.GroupReadSupport;
-import parquet.hadoop.mapred.DeprecatedParquetInputFormat;
-
-@SuppressWarnings({ "unchecked", "rawtypes" })
-public class ParquetFileWordCount extends WordCount {
+@SuppressWarnings({"rawtypes", "unchecked"})
+public class SequenceFileWordCount extends WordCount {
 
 	private static final long serialVersionUID = 1L;
 
-	// A necessity for parquet in terms of schema.
-	public static class ExampleGroupDeprecatedParquetInputFormat extends DeprecatedParquetInputFormat {
-
-		public ExampleGroupDeprecatedParquetInputFormat(JobConf conf) {
-			ParquetInputFormat.setReadSupportClass(conf, GroupReadSupport.class);
-		}
-
-		// This empty constructor is being used by Hadoop.
-		public ExampleGroupDeprecatedParquetInputFormat() {
-
-		}
-	}
-
+	
 	@Override
 	public Plan getPlan(String... args) {
 
@@ -57,11 +43,8 @@ public class ParquetFileWordCount extends WordCount {
 		String dataInput = (args.length > 1 ? args[1] : "");
 		String output = (args.length > 2 ? args[2] : "");
 
-		Configuration configuration = new JobConf();
-		
-		HadoopDataSource source = new HadoopDataSource(new ExampleGroupDeprecatedParquetInputFormat((JobConf) configuration),
-				(JobConf) configuration, "Input Lines", new DefaultParquetTypeConverter());
-		ExampleGroupDeprecatedParquetInputFormat.addInputPath(source.getJobConf(), new Path(dataInput));
+		HadoopDataSource source = new HadoopDataSource(new SequenceFileInputFormat(), new JobConf(), "Input Lines");
+		SequenceFileInputFormat.addInputPath(source.getJobConf(), new Path(dataInput));
 
 		MapOperator mapper = MapOperator.builder(new TokenizeLine()).input(source).name("Tokenize Lines").build();
 		ReduceOperator reducer = ReduceOperator.builder(CountWords.class, StringValue.class, 0).input(mapper).name("Count Words").build();
@@ -69,13 +52,13 @@ public class ParquetFileWordCount extends WordCount {
 		CsvOutputFormat.configureRecordFormat(out).recordDelimiter('\n').fieldDelimiter(' ').field(StringValue.class, 0)
 				.field(IntValue.class, 1);
 
-		Plan plan = new Plan(out, "WordCount Example with a Parquet File as Input");
+		Plan plan = new Plan(out, "WordCount Example with a Sequence File as Input");
 		plan.setDefaultParallelism(numSubTasks);
 		return plan;
 	}
 
 	public static void main(String[] args) throws Exception {
-		WordCount wc = new ParquetFileWordCount();
+		WordCount wc = new SequenceFileWordCount();
 
 		if (args.length < 3) {
 			System.err.println(wc.getDescription());
@@ -85,4 +68,5 @@ public class ParquetFileWordCount extends WordCount {
 		Plan plan = wc.getPlan(args);
 		LocalExecutor.execute(plan);
 	}
+
 }

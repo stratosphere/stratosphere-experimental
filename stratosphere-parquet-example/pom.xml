@@ -1,42 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>eu.stratosphere</groupId>
-        <artifactId>stratosphere-artifacts</artifactId>
-        <version>0.5-SNAPSHOT</version>
-        <relativePath>..</relativePath>
-    </parent>
+	<parent>
+		<groupId>eu.stratosphere</groupId>
+		<artifactId>stratosphere-artifacts</artifactId>
+		<version>0.5-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
 
-    <artifactId>stratosphere-parquet-example</artifactId>
-    <name>stratosphere-parquet-example</name>
+	<artifactId>stratosphere-parquet-example</artifactId>
+	<name>stratosphere-parquet-example</name>
 
-    <packaging>jar</packaging>
+	<packaging>jar</packaging>
 
-    <dependencies>
+	<dependencies>
 
-        <dependency>
-            <groupId>eu.stratosphere</groupId>
-            <artifactId>hadoop-compatibility</artifactId>
-            <version>0.5-SNAPSHOT</version>
-        </dependency>
+		<dependency>
+			<groupId>eu.stratosphere</groupId>
+			<artifactId>hadoop-compatibility</artifactId>
+			<version>0.5-SNAPSHOT</version>
+		</dependency>
 
-        <dependency>
-            <groupId>eu.stratosphere</groupId>
-            <artifactId>stratosphere-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+		<dependency>
+			<groupId>eu.stratosphere</groupId>
+			<artifactId>stratosphere-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>parquet-hadoop</artifactId>
-            <!-- TODO The latest version cannot be supported at the moment,
-             as work is needed on Hadoop Counters in Stratosphere.-->
-            <version>1.0.1</version>
-        </dependency>
+		<dependency>
+			<groupId>eu.stratosphere</groupId>
+			<artifactId>stratosphere-test-utils</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>parquet-hadoop</artifactId>
+			<!-- TODO The latest version cannot be supported at the moment, as work 
+				is needed on Hadoop Counters in Stratosphere. -->
+			<version>1.0.1</version>
+		</dependency>
 
-    </dependencies>
+	</dependencies>
 </project>
